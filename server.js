@@ -181,3 +181,23 @@ app.get('/api/v1/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`[SYSTEM RUNNING]: Central Identity Engine running on port ${PORT}`);
 });
+
+
+
+// =========================================================================
+// RECON VULNERABILITY: EXPOSED STAGING DEBUG INTERFACE (INFORMATION DISCLOSURE)
+// =========================================================================
+app.get('/api/v1/debug/db-status', (req, res) => {
+  // Simulating a system information leak that helps the player craft the Stage 1 SQLi
+  res.status(200).json({
+    environment: "staging_environment_alpha",
+    database_engine: "SQLite3_Virtual_Core",
+    connection_status: "active",
+    schema_blueprint: {
+      target_table: "operators",
+      monitored_fields: ["id", "username", "password_hash", "role"],
+      active_query_template: "SELECT * FROM operators WHERE username = 'INPUT_USER' AND password = 'INPUT_PASSWORD'"
+    },
+    system_diagnostic_notes: "Notice: Strict parameter sanitization filters are currently toggled OFF for structural testing routines. Use standard connection strings."
+  });
+});
