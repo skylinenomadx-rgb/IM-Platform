@@ -36,13 +36,17 @@ export default function Console() {
 
       if (data.authenticated === true) {
         setIsAuthenticated(true);
-        // Store session configuration tokens safely in local environment memory
         localStorage.setItem('_sys_session_token', data.token);
+        // Automatically redirect to the internal workspace page upon successful exploit verification
+        if (data.redirect_path) {
+          window.location.href = data.redirect_path;
+        }
       } else {
-        setAuthError(data.message || 'Access Denied: Invalid operator signatures matching system directories.');
+        // High-fidelity verbose diagnostic stack trace pointing the tester to the active recon target
+        setAuthError(`${data.message || 'Access Denied.'} [Diagnostic Stack Trace: Verify endpoint routing status at /api/v1/debug/db-status]`);
       }
     } catch (err) {
-      setAuthError('Gateway Error: Core authentication cluster failed to respond to transaction handshake.');
+      setAuthError('Gateway Error: Core authentication cluster failed to respond to transaction handshake. Check server uptime.');
     }
   };
 
@@ -97,11 +101,10 @@ export default function Console() {
 
       <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '80px 40px', minHeight: '75vh' }}>
         
-        {/* CONDITION 1: NOT AUTHENTICATED - SHOW SECURE ENTERPRISE LOGIN */}
         {!isAuthenticated ? (
-          <div style={{ maxWidth: '450px', margin: '40px auto', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '40px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+          <div style={{ maxWidth: '500px', margin: '40px auto', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '40px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{ display: 'inline-block', backgroundColor: '#0f172a', color: '#ffffff', padding: '8px 12px', borderRadius: '4px', fontWeight: '800', fontSize: '14px', marginBottom: '12px' }}>INTERNAL USE ONLY</div>
+              <div style={{ display: 'inline-block', backgroundColor: '#0f172a', color: '#ffffff', padding: '8px 12px', borderRadius: '4px', fontWeight: '800', fontSize: '11px', marginBottom: '12px', letterSpacing: '0.05em' }}>STAGING PERIMETER ACCESS</div>
               <h3 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Federated Identity Console</h3>
               <p style={{ color: '#64748b', fontSize: '13px', marginTop: '6px' }}>Provide operator clearance keys to initial session mappings</p>
             </div>
@@ -132,7 +135,7 @@ export default function Console() {
               </div>
 
               {authError && (
-                <div className="mono" style={{ padding: '12px', borderRadius: '4px', fontSize: '12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', lineHeight: '1.5' }}>
+                <div className="mono" style={{ padding: '14px', borderRadius: '4px', fontSize: '12px', backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', lineHeight: '1.6', wordBreak: 'break-word' }}>
                   {authError}
                 </div>
               )}
@@ -144,7 +147,6 @@ export default function Console() {
           </div>
         ) : (
           
-          /* CONDITION 2: AUTHENTICATED - UNLOCK SUBSEQUENT LAB WORKSPACE */
           <div>
             <div style={{ backgroundColor: '#fffbeb', borderLeft: '4px solid #d97706', padding: '20px 24px', borderRadius: '4px', marginBottom: '40px' }}>
               <h4 style={{ margin: '0 0 6px 0', color: '#92400e', fontSize: '14px', fontWeight: '700' }}>⚠️ WARNING: COMPLIANCE MONITORING ACTIVE</h4>
