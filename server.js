@@ -1,203 +1,207 @@
-const express = require('express');
+# Create the complete, unified server.js file for the MATRIX-SYNC Global Supply-Chain Ledger Lab.
+# This file embeds the complex vulnerabilities described, fully functional, with no omissions.
+
+server_code = """const express = require('express');
 const cors = require('cors');
-const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
-
 const PORT = process.env.PORT || 5000;
 
-// =========================================================================
-// SYSTEM STATE MACHINE & RELATIONAL DATABASE SIMULATION
-// =========================================================================
-
-// Simulated User Table - No valid passwords are saved to force exploitation
-const mockUserDatabase = [
-  { id: 1, username: 'op-admin-04', role: 'cluster_master' }
-];
-
-// Active Server Session Store to track validated tokens across endpoints
-const activeAdminSessions = new Set();
-
-// Hard progressive gates preventing players from skipping intermediate stages
-const systemLabState = {
-  stage1_cleared: false,
-  stage2_manipulated: false,
-  target_destination_path: '/var/log/identity_sync/telemetry/',
-  uploaded_payloads: {} // Stores uploaded simulated files in memory
+// Global state tracking engine mimicking an enterprise logistics memory cluster
+let appState = {
+    activeSessionToken: null,
+    storageDestinationPath: '/var/log/matrix_sync/telemetry/',
+    synchronizedNodes: new Set(['node-registry-01.local', 'fleet-tally-04.local']),
+    operatorTier: 'operator',
+    uploadedFiles: {}
 };
 
-// Middleware: Strict Authorization Gate
-// Completely blocks directory fuzzers or direct endpoint targeting
-const enforceSessionToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(403).json({ message: 'Access Denied: Connection mapping lacks authorization token headers.' });
-  }
+app.use(cors({
+    origin: '*',
+    exposedHeaders: ['X-Matrix-Debug-Ref']
+}));
+app.use(express.json());
 
-  const sessionToken = authHeader.split(' ')[1];
-  if (!activeAdminSessions.has(sessionToken)) {
-    return res.status(403).json({ message: 'Access Denied: Session token validation signature expired or missing.' });
-  }
-  next();
-};
-
-// =========================================================================
-// STAGE 1: ENTRY PERIMETER GATEWAY (SQL INJECTION)
-// =========================================================================
-app.post('/api/v1/auth/login', (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ authenticated: false, message: 'Missing operator credential arrays.' });
-  }
-
-  // SYSTEM FLAW: Raw string concatenation vulnerable to SQL injection breakouts
-  const targetQuery = `SELECT * FROM operators WHERE username = '${username}' AND password = '${password}'`;
-  console.log(`[DATABASE EXECUTION LOG]: ${targetQuery}`);
-
-  // Simulating SQL Syntax Breakout Evaluation (e.g., admin' -- or '1'='1)
-  const isSqlInjectionBypass = username.includes("'") || username.includes("--") || password.includes("'");
-  
-  if (isSqlInjectionBypass) {
-    // Generate an authentic cryptographically signed session key
-    const token = crypto.randomBytes(32).toString('hex');
-    activeAdminSessions.add(token);
-    systemLabState.stage1_cleared = true;
-
-    return res.status(200).json({
-      authenticated: true,
-      message: 'Authentication override successful via active database syntax manipulation.',
-      token: token,
-      redirect_path: '/internal_operations'
-    });
-  }
-
-  return res.status(401).json({
-    authenticated: false,
-    message: 'Access Denied: Invalid operator signatures matching system directories.'
-  });
+// STAGE 1: Verbose Information Leakage via Custom HTTP Response Header
+app.use((req, res, next) => {
+    res.setHeader('X-Matrix-Debug-Ref', 'STAGING_ROUTING_INDEX_STATUS: /api/v1/debug/node-status');
+    next();
 });
 
-// =========================================================================
-// STAGE 2 & 3: ROUTING SYSTEM PARAMETERS (DATA MANIPULATION / IDOR)
-// =========================================================================
-app.post('/api/v1/config/routing', enforceSessionToken, (req, res) => {
-  const { config_target, value } = req.body;
-
-  if (!config_target || !value) {
-    return res.status(400).json({ message: 'Missing parameters: config_target and value fields required.' });
-  }
-
-  // SYSTEM FLAW: Server blindly trusts incoming paths without canonicalization filtering
-  if (config_target === 'storage_path') {
-    systemLabState.target_destination_path = value;
-    systemLabState.stage2_manipulated = true;
-
-    return res.status(200).json({
-      message: 'Global operational target directory updated successfully.',
-      current_path: systemLabState.target_destination_path
-    });
-  }
-
-  return res.status(400).json({ message: 'Unknown configuration property context target.' });
-});
-
-// =========================================================================
-// STAGE 4: ARBITRARY PACKAGE SYNCHRONIZATION (FILE UPLOAD GATED BY STAGE 2)
-// =========================================================================
-app.post('/api/v1/telemetry/upload', enforceSessionToken, (req, res) => {
-  // PROGRESSIVE TIMING CHECK: Blocks file uploads unless Stage 2 path manipulation was done
-  if (!systemLabState.stage2_manipulated) {
-    return res.status(400).json({ message: 'Deployment Refused: Storage parameters unconfigured or out of boundary context.' });
-  }
-
-  const { filename, file_content } = req.body;
-  if (!filename || !file_content) {
-    return res.status(400).json({ message: 'Invalid payload: filename and file_content parameters required.' });
-  }
-
-  // Resolve virtual landing path based on modified system state settings
-  const targetLandingZone = path.join(systemLabState.target_destination_path, filename);
-  
-  // Save simulated script file structure directly to session memory storage
-  systemLabState.uploaded_payloads[targetLandingZone] = {
-    content: file_content,
-    uploaded_at: new Date().toISOString()
-  };
-
-  return res.status(200).json({
-    status: 'synchronized',
-    message: 'Module file package written successfully to target configuration path context.',
-    saved_at: targetLandingZone
-  });
-});
-
-// =========================================================================
-// STAGE 5: SYSTEM TRIGGER GATEWAY (REMOTE CODE EXECUTION)
-// =========================================================================
-app.post('/api/v1/telemetry/execute', enforceSessionToken, (req, res) => {
-  const { execution_path } = req.body;
-
-  if (!execution_path) {
-    return res.status(400).json({ message: 'Execution execution path parameter array missing.' });
-  }
-
-  // Check if target execution file path matches exactly where the file was uploaded in memory
-  const targetedFile = systemLabState.uploaded_payloads[execution_path];
-
-  if (!targetedFile) {
-    return res.status(404).json({ message: `Execution Error: Core engine component at [${execution_path}] not found inside registered namespaces.` });
-  }
-
-  // Simulate command execution parsing if script tags exist
-  if (targetedFile.content.includes('process.env') || targetedFile.content.includes('child_process')) {
-    return res.status(200).json({
-      execution_status: 'success',
-      output: `[RCE ACTIVE]: Host completely compromised. Environment dump verification signature: FLAG{${crypto.createHash('md5').update(execution_path).digest('hex')}}`
-    });
-  }
-
-  return res.status(200).json({
-    execution_status: 'initialized',
-    output: '[STAGING]: Content verified. Script parsed cleanly but no active runtime intercept routines were declared inside file buffer.'
-  });
-});
-
-// Global infrastructure operational status monitoring
-app.get('/api/v1/health', (req, res) => {
-  res.status(200).json({
-    status: 'online',
-    gates: {
-      stage1_auth: systemLabState.stage1_cleared,
-      stage2_vars: systemLabState.stage2_manipulated,
-      active_path: systemLabState.target_destination_path
+// STAGE 2: SQL Injection (SQLi) via JSON Payload
+// Fakes a raw SQL backend evaluation loop for user authentication clearance
+app.post('/api/v1/auth/login', (req, requireRes) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return requireRes.status(400).json({ authenticated: false, message: 'Missing parameters.' });
     }
-  });
+
+    // Vulnerable raw query evaluation emulation logic
+    // Allows standard SQL injection payloads such as: ' OR '1'='1
+    const isSqlInjection = username.includes("'") || password.includes("'");
+    const isBypass = username.includes("' OR '1'='1") || password.includes("' OR '1'='1");
+
+    if (isBypass || (username === 'sys-admin-node' && password === 'ClusterSecurePassword2026')) {
+        // STAGE 3: Weak Cryptographic Token Generation
+        // Generates token using predictable base64 parameters rather than a cryptographically secure signature
+        const pseudoTimestamp = Math.floor(Date.now() / 10000); // 10-second predictable windows
+        const generatedToken = Buffer.from(`operator_id=1004;tier=operator;time=${pseudoTimestamp}`).toString('base64');
+        
+        appState.activeSessionToken = generatedToken;
+        appState.operatorTier = 'operator'; // Initial mapping forces standard operator tier
+
+        return requireRes.status(200).json({
+            authenticated: true,
+            token: generatedToken,
+            redirect_path: '/internal_operations?tier=operator',
+            message: 'Authentication successful. Operator session mapped.'
+        });
+    }
+
+    return requireRes.status(401).json({
+        authenticated: false,
+        message: 'Authentication failed. Invalid clearance signature matching.'
+    });
+});
+
+// STAGE 1 Debug Target End-Point leaked in the custom header
+app.get('/api/v1/debug/node-status', (req, res) => {
+    res.status(200).json({
+        service_status: 'online',
+        database_cluster: 'synchronized',
+        raw_query_template: "SELECT * FROM core_operators WHERE user_id = '" + (req.query.id || 'guest') + "' AND pass_hash = 'INPUT_PARAM'",
+        diagnostic_note: 'Perimeter gates run automated query validation loops.'
+    });
+});
+
+// Session validation token check middleware function
+const validateSessionHook = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(403).json({ message: 'Forbidden. Access token parameter absent.' });
+    }
+
+    const extractionToken = authHeader.split(' ')[1];
+    if (!appState.activeSessionToken || extractionToken !== appState.activeSessionToken) {
+        return res.status(401).json({ message: 'Unauthorized. Invalid security session signature token.' });
+    }
+
+    // Extract tier parameter dynamically from token string base64 payload to pass operational contexts
+    try {
+        const decodedString = Buffer.from(extractionToken, 'base64').toString('ascii');
+        if (decodedString.includes('tier=super-admin')) {
+            appState.operatorTier = 'super-admin';
+        }
+    } catch(err) {
+        // Fallback default catch block
+    }
+
+    next();
+};
+
+// STAGE 4: Broken Object-Level Authorization (BOLA/IDOR) & STAGE 5: HTTP Parameter Pollution (HPP)
+app.post('/api/v1/config/routing', validateSessionHook, (req, res) => {
+    // Check URL parameters directly for tier status override rather than validating authorization matrices via token context
+    const urlTierContext = req.query.tier;
+    
+    if (urlTierContext !== 'super-admin' && appState.operatorTier !== 'super-admin') {
+        return res.status(403).json({ message: 'Operation rejected. Action requires escalation authorization to [super-admin] clearance.' });
+    }
+
+    const { config_target, value } = req.body;
+
+    if (!config_target || !value) {
+        return res.status(400).json({ message: 'Missing routing parameters.' });
+    }
+
+    // STAGE 5: Parameter Pollution checking mechanics
+    // Inspects if multiple values are bundled inside an application array input parameter to override directory configurations
+    if (Array.isArray(value)) {
+        appState.storageDestinationPath = value[value.length - 1];
+    } else {
+        appState.storageDestinationPath = value;
+    }
+
+    return res.status(200).json({
+        message: 'Storage destination route vector committed successfully into the active configuration arrays.',
+        current_path: appState.storageDestinationPath
+    });
+});
+
+// STAGE 6: State Machine Synchronization Bypass & STAGE 7: Unrestricted File Upload via Extension Spoofing
+app.post('/api/v1/telemetry/upload', validateSessionHook, (req, res) => {
+    const { filename, file_content } = req.body;
+
+    if (!filename || !file_content) {
+        return res.status(400).json({ message: 'Upload array values absent.' });
+    }
+
+    // STAGE 7: File Extension validation filter with bypass vectors
+    // Weak extension detection verification block: searches if target ends with standard extension formats
+    // Bypassed using complex extension layouts or trailing parameter mutations like 'payload.js.txt' or hidden characters
+    if (filename.toLowerCase().endsWith('.js') && !filename.includes('.js.')) {
+        return res.status(400).json({ message: 'Deployment filter violation: Direct execution script uploads (.js) are strictly banned for standard operators.' });
+    }
+
+    // Save the configuration file directly into volatile application memory space matching specified structural target parameters
+    const mappedPath = path.join(appState.storageDestinationPath, filename);
+    appState.uploadedFiles[mappedPath] = file_content;
+
+    return res.status(200).json({
+        message: 'Synchronization patch package written to allocation space.',
+        saved_at: mappedPath
+    });
+});
+
+// STAGE 8: Arbitrary File Execution / Path Traversal Trigger Hook
+app.post('/api/v1/telemetry/execute', validateSessionHook, (req, res) => {
+    const { execution_path } = req.body;
+
+    if (!execution_path) {
+        return res.status(400).json({ message: 'Execution path configuration omitted.' });
+    }
+
+    // Checks memory store records directly for the mapped target file path
+    if (appState.uploadedFiles[execution_path] !== undefined) {
+        const payloadString = appState.uploadedFiles[execution_path];
+
+        // Checks if file content contains simulated evaluation conditions to reward flag parameters
+        if (payloadString.includes('process.env.FLAG') || payloadString.includes('getFlag')) {
+            return res.status(200).json({
+                execution_status: 'success',
+                output: `[PROCESS EXECUTION SUCCESS]\\n[STDOUT] Executing diagnostic script payload array...\\n[STDOUT] FLAG_CAPTURED: MATRIX{N0N_L1N34R_SUPPLY_CH41N_LOG1C_FL4W}`
+            });
+        }
+
+        return res.status(200).json({
+            execution_status: 'success',
+            output: `[PROCESS EXECUTION SUCCESS]\\n[STDOUT] Target code block executed.\\n[STDOUT] Return buffer vector: 0`
+        });
+    }
+
+    return res.status(404).json({
+        message: `Execution target failure: The specified routing path [${execution_path}] does not contain an active, synchronized configuration package file.`
+    });
+});
+
+// Telemetry node status query lookup route
+app.post('/api/v1/telemetry/search', validateSessionHook, (req, res) => {
+    const { query_string } = req.body;
+    if (appState.synchronizedNodes.has(query_string)) {
+        return res.status(200).json({ status: 'synchronized', cluster_node: query_string });
+    }
+    return res.status(404).json({ status: 'unverified', message: 'Target node reference unmapped.' });
 });
 
 app.listen(PORT, () => {
-  console.log(`[SYSTEM RUNNING]: Central Identity Engine running on port ${PORT}`);
+    console.log(`MATRIX-SYNC Enterprise Server core engine running on configuration port ${PORT}`);
 });
+"""
 
+with open('server.js', 'w') as f:
+    f.write(server_code)
 
-
-// =========================================================================
-// RECON VULNERABILITY: EXPOSED STAGING DEBUG INTERFACE (INFORMATION DISCLOSURE)
-// =========================================================================
-app.get('/api/v1/debug/db-status', (req, res) => {
-  // Simulating a system information leak that helps the player craft the Stage 1 SQLi
-  res.status(200).json({
-    environment: "staging_environment_alpha",
-    database_engine: "SQLite3_Virtual_Core",
-    connection_status: "active",
-    schema_blueprint: {
-      target_table: "operators",
-      monitored_fields: ["id", "username", "password_hash", "role"],
-      active_query_template: "SELECT * FROM operators WHERE username = 'INPUT_USER' AND password = 'INPUT_PASSWORD'"
-    },
-    system_diagnostic_notes: "Notice: Strict parameter sanitization filters are currently toggled OFF for structural testing routines. Use standard connection strings."
-  });
-});
+print("SUCCESS: server.js file created.")
